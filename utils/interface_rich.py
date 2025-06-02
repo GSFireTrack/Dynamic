@@ -8,11 +8,10 @@ from rich.prompt import Confirm
 
 from models.ocorrencia import obter_info_ocorrencia
 from utils.helpers import deletar_ocorrencias_json, obter_nome_severidade
-from config.config_manager import ConfigManager, TerminalTheme
+from config.config_manager import TerminalTheme
 from utils.terminal import get_console
 
 # ---------------------------------- Config ---------------------------------- #
-config_manager = ConfigManager()
 console = get_console()
 
 # ---------------------------------- Menu ----------------------------------- #
@@ -103,6 +102,9 @@ def imprimir_pergunta(
             f"[{cor}]{texto}[/{cor}]", default=default, console=console
         )
         if accepted_answers and resposta not in accepted_answers:
+            if None in accepted_answers:
+                accepted_answers.remove(None)
+            accepted_answers = [str(ans) for ans in accepted_answers]
             imprimir_erro(f"Resposta inválida. Aceitas: {', '.join(accepted_answers)}")
             continue
         if resposta:
@@ -325,12 +327,11 @@ def painel_configuracoes_simulador(
     console.print(painel)
 
 
-def painel_configuracoes_interativas(simulador):
+def painel_configuracoes_interativas(simulador, config_manager):
     """Exibe as configurações como uma tabela interativa e permite edição"""
-    config = config_manager.config
     imprimir_titulo("Configurações do Simulador", emoji="⚙️", cor="bright_blue")
 
-    tema_atual = config.theme
+    tema_atual = config_manager.config.theme
 
     tabela = Table(title="🔧 Configurações Atuais", box=box.SIMPLE_HEAVY)
     tabela.add_column("Opção", style="cyan", justify="right")
@@ -343,10 +344,14 @@ def painel_configuracoes_interativas(simulador):
         "Sem cor (no_color)" if tema_atual == "no_color" else "Padrão (colorido)",
     )
     tabela.add_row(
-        "2", "Tempo de delay entre ações", str(config.delay_time) + " segundos"
+        "2",
+        "Tempo de delay entre ações",
+        str(config_manager.config.delay_time) + " segundos",
     )
     tabela.add_row(
-        "3", "Modo de depuração", "Ativado" if config.debug else "Desativado"
+        "3",
+        "Modo de depuração",
+        "Ativado" if config_manager.config.debug else "Desativado",
     )
     tabela.add_row(
         "4",
@@ -371,6 +376,8 @@ def painel_configuracoes_interativas(simulador):
         escolha = Prompt.ask(
             "[magenta]Digite o número da configuração que deseja alterar[/magenta]",
             default="0",
+            show_default=False,
+            console=console,
         ).strip()
         if escolha == "0":
             imprimir_info("Retornando ao menu...")
@@ -378,7 +385,7 @@ def painel_configuracoes_interativas(simulador):
         elif escolha == "1":
             novo_tema = (
                 TerminalTheme.NO_COLOR
-                if config.theme == TerminalTheme.DEFAULT
+                if config_manager.config.theme == TerminalTheme.DEFAULT
                 else TerminalTheme.DEFAULT
             )
             config_manager.update_config(theme=novo_tema)
@@ -389,7 +396,7 @@ def painel_configuracoes_interativas(simulador):
         elif escolha == "2":
             novo_delay = Prompt.ask(
                 "[magenta]Digite o novo tempo de delay entre ações (em segundos)[/magenta]",
-                default=str(config.delay_time),
+                default=str(config_manager.config.delay_time),
                 show_default=True,
             )
             try:
@@ -397,16 +404,13 @@ def painel_configuracoes_interativas(simulador):
                     raise ValueError
                 config_manager.update_config(delay_time=float(novo_delay))
                 imprimir_info(
-                    f"Tempo de delay atualizado para: {config.delay_time} segundos"
+                    f"Tempo de delay atualizado para: {config_manager.config.delay_time} segundos"
                 )
             except ValueError:
                 imprimir_erro("Valor inválido. Deve ser um número positivo.")
             break
         elif escolha == "3":
-            novo_debug = Confirm.ask(
-                "[magenta]Deseja ativar o modo de depuração?[/magenta]",
-                default=config.debug,
-            )
+            novo_debug = not config_manager.config.debug
             config_manager.update_config(debug=novo_debug)
             imprimir_info(
                 f"Modo de depuração {'ativado' if novo_debug else 'desativado'}."
@@ -430,6 +434,7 @@ def painel_configuracoes_interativas(simulador):
             if confirmar:
                 deletar_ocorrencias_json()
                 from services.simulador_service import simulador_clear
+
                 simulador_clear(simulador)
                 imprimir_sucesso("Todas as ocorrências foram deletadas.")
                 break

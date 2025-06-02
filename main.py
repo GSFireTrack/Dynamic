@@ -47,7 +47,10 @@ def processar_opcao_1(simulador):
 
     severidade_min = min(SEVERIDADES.keys())
     severidade_max = max(SEVERIDADES.keys())
-    entrada_sev = imprimir_pergunta(f"Severidade {(severidade_min, severidade_max)}", accepted_answers=list(SEVERIDADES.keys()))
+    entrada_sev = imprimir_pergunta(
+        f"Severidade {(severidade_min, severidade_max)}",
+        accepted_answers=list(SEVERIDADES.keys()),
+    )
 
     if validar_entrada_numerica(entrada_sev, 1, 4):
         severidade = int(entrada_sev)
@@ -74,7 +77,7 @@ def processar_opcao_6(simulador):
     listar_historico_acoes(simulador, limite)
 
 
-def processar_opcao_8(simulador):
+def processar_opcao_8(simulador, config):
     imprimir_titulo("Simular chamadas aleatórias", emoji="🎲", cor="blue")
 
     try:
@@ -83,13 +86,13 @@ def processar_opcao_8(simulador):
     except ValueError:
         qtd = 5
 
-    simular_chamadas_aleatorias(simulador, qtd)
+    simular_chamadas_aleatorias(simulador, qtd, config)
 
 
 def executar_simulador():
     simulador = criar_simulador()
     carregar_ocorrencias_json(simulador)
-    config = ConfigManager().config
+    config = ConfigManager()
 
     while True:
         try:
@@ -117,12 +120,12 @@ def executar_simulador():
                 imprimir_titulo("Relatório por região", emoji="📊", cor="magenta")
                 gerar_relatorio_por_regiao(simulador)
             elif opcao == "8":
-                processar_opcao_8(simulador)
+                processar_opcao_8(simulador, config)
             elif opcao == "9":
                 imprimir_titulo("Status do sistema", emoji="📈", cor="blue")
                 mostrar_status_sistema(simulador)
             elif opcao == "10":
-                painel_configuracoes_interativas(simulador)
+                painel_configuracoes_interativas(simulador, config)
             elif opcao == "0":
                 salvar_ocorrencias_json(simulador)
                 limpar_tela()

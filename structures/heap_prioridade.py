@@ -10,7 +10,13 @@ def criar_heap_prioridade():
 def inserir_heap(heap, ocorrencia):
     """Insere uma ocorrência no heap de prioridade"""
     prioridade = calcular_chave_prioridade(ocorrencia)
-    item = (prioridade, ocorrencia["timestamp"], ocorrencia)
+    item = (
+        prioridade,
+        ocorrencia["timestamp"],
+        ocorrencia["tempo_estimado"],
+        ocorrencia["id"],
+        ocorrencia,
+    )
     heapq.heappush(heap, item)
 
 
@@ -18,7 +24,7 @@ def remover_heap(heap):
     """Remove e retorna a ocorrência de maior prioridade"""
     if not heap:
         return None
-    prioridade, timestamp, ocorrencia = heapq.heappop(heap)
+    _, _, _, _, ocorrencia = heapq.heappop(heap)
     return ocorrencia
 
 
@@ -44,7 +50,7 @@ def listar_heap_ordenado(heap):
     ocorrencias = []
 
     while heap_temp:
-        _, _, ocorrencia = heapq.heappop(heap_temp)
+        _, _, _, _, ocorrencia = heapq.heappop(heap_temp)
         ocorrencias.append(ocorrencia)
 
     return ocorrencias

@@ -4,7 +4,6 @@ from time import sleep
 import uuid
 
 from config.constants import (
-    DELAY_TIME,
     DESCRICOES_PADRAO,
     EQUIPES_DISPONIVEIS,
     REGIOES_PADRAO,
@@ -58,8 +57,6 @@ from utils.interface_rich import (
     tabela_ocorrencias_andamento,
     tabela_ocorrencias_pendentes,
 )
-
-
 from datetime import datetime
 
 
@@ -234,7 +231,7 @@ def gerar_relatorio_por_regiao(simulador):
     )
 
 
-def simular_chamadas_aleatorias(simulador, quantidade=5):
+def simular_chamadas_aleatorias(simulador, quantidade=5, config_manager=None):
     """Simula a inserção de chamadas aleatórias no sistema"""
     print()
     painel_simulacao_chamadas(quantidade)
@@ -244,7 +241,7 @@ def simular_chamadas_aleatorias(simulador, quantidade=5):
         severidade = random.randint(1, 4)
         descricao = random.choice(DESCRICOES_PADRAO)
         inserir_nova_ocorrencia(simulador, regiao, severidade, descricao)
-        sleep(DELAY_TIME)
+        sleep(config_manager.config.delay_time)
 
     print()
     imprimir_sucesso(f"{quantidade} ocorrências simuladas com sucesso!")
