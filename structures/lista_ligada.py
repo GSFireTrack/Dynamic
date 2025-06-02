@@ -45,11 +45,6 @@ def listar_historico_lista(lista, limite=10):
     return historico
 
 
-def tamanho_lista(lista):
-    """Retorna o tamanho da lista"""
-    return lista["tamanho"]
-
-
 def lista_vazia(lista):
     """Verifica se a lista está vazia"""
     return lista["cabeca"] is None

@@ -2,7 +2,7 @@ def criar_no_arvore(regiao):
     """Cria um novo nó da árvore"""
     return {
         "regiao": regiao,
-        "ocorrencias": [],  # IDs das ocorrências
+        "ocorrencias": [],
         "total_ocorrencias": 0,
         "esquerda": None,
         "direita": None,

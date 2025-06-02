@@ -30,11 +30,6 @@ def ver_topo_heap(heap):
     return ocorrencia
 
 
-def tamanho_heap(heap):
-    """Retorna o tamanho do heap"""
-    return len(heap)
-
-
 def heap_vazio(heap):
     """Verifica se o heap está vazio"""
     return len(heap) == 0
@@ -59,4 +54,4 @@ def calcular_chave_prioridade(ocorrencia):
     """Calcula a chave de prioridade para uma ocorrência"""
     severidade = ocorrencia["severidade"]
     timestamp = ocorrencia["timestamp"].timestamp()
-    return (-severidade, timestamp)  # negando a severidade para criar um heap máximo
+    return (-severidade, timestamp)  # Negando a severidade para criar um heap máximo

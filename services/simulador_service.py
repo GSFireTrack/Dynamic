@@ -14,7 +14,6 @@ from models.ocorrencia import (
     criar_ocorrencia,
     atualizar_status_ocorrencia,
     atribuir_equipe_ocorrencia,
-    obter_info_ocorrencia,
 )
 from structures.heap_prioridade import (
     criar_heap_prioridade,
@@ -47,6 +46,7 @@ from utils.helpers import (
 from utils.interface_rich import (
     imprimir_erro,
     imprimir_alerta,
+    imprimir_mensagem,
     imprimir_sucesso,
     painel_atender_proxima_ocorrencia,
     painel_finalizar_atendimento,
@@ -60,13 +60,7 @@ from utils.interface_rich import (
 )
 
 
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-from rich import box
 from datetime import datetime
-
-console = Console()
 
 
 def criar_simulador():
@@ -76,7 +70,7 @@ def criar_simulador():
         "pilha_em_andamento": criar_pilha(),
         "historico": criar_lista_ligada(),
         "arvore_regioes": criar_arvore_regioes(),
-        "ocorrencias": {},  # Dicionário para armazenamento rápido por ID
+        "ocorrencias": {},
         "equipes_ocupadas": set(),
     }
 
@@ -203,6 +197,9 @@ def gerar_relatorio_por_regiao(simulador):
         return
 
     total_geral = 0
+    total_pendentes = 0
+    total_andamento = 0
+    total_concluidas = 0
 
     for dados in relatorio:
         status_count = {
@@ -217,13 +214,24 @@ def gerar_relatorio_por_regiao(simulador):
                 status = simulador["ocorrencias"][ocorrencia_id]["status"]
                 status_count[status] += 1
 
+        total_pendentes += status_count["Pendente"]
+        total_andamento += status_count["Em Andamento"]
+        total_concluidas += status_count["Concluída"]
+
         total_geral += dados["total_ocorrencias"]
 
         painel_relatorio_regiao(
-            dados["regiao"], dados["total_ocorrencias"], status_count
+            dados["regiao"],
+            dados["total_ocorrencias"],
+            status_count,
         )
 
-    console.print(f"\n[bold]TOTAL GERAL DE OCORRÊNCIAS:[/bold] {total_geral}")
+    print()
+    imprimir_mensagem("" + "=" * 50)
+    imprimir_mensagem(
+        f"Total de ocorrências registradas: {total_geral} em {len(relatorio)} regiões."
+        f"\nPendentes: {total_pendentes}, Em Andamento: {total_andamento}, Concluídas: {total_concluidas}"
+    )
 
 
 def simular_chamadas_aleatorias(simulador, quantidade=5):
@@ -236,7 +244,7 @@ def simular_chamadas_aleatorias(simulador, quantidade=5):
         severidade = random.randint(1, 4)
         descricao = random.choice(DESCRICOES_PADRAO)
         inserir_nova_ocorrencia(simulador, regiao, severidade, descricao)
-        sleep(DELAY_TIME)  # Pausa para simular o tempo de inserção
+        sleep(DELAY_TIME)
 
     print()
     imprimir_sucesso(f"{quantidade} ocorrências simuladas com sucesso!")
@@ -257,3 +265,12 @@ def mostrar_status_sistema(simulador):
         num_equipes_disponiveis,
         len(EQUIPES_DISPONIVEIS),
     )
+
+
+def simulador_clear(simulador):
+    """Limpa o simulador, removendo todas as ocorrências e estruturas internas."""
+    simulador["fila_prioridade"] = criar_heap_prioridade()
+    simulador["pilha_em_andamento"] = criar_pilha()
+    simulador["historico"] = criar_lista_ligada()
+    simulador["arvore_regioes"] = criar_arvore_regioes()
+    simulador["ocorrencias"] = {}

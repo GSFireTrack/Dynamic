@@ -128,6 +128,7 @@ pip install rich
 7. 📊 Relatório por região
 8. 🎲 Simular chamadas aleatórias
 9. 📈 Status do sistema
+10. ⚙️ Configurações do simulador
 0. 🚪 Sair
 ```
 
@@ -179,6 +180,13 @@ pip install rich
    - Escolha opção `9` para ver resumo do sistema
    - Observe equipes ocupadas e estatísticas gerais
 
+10. **Configurações do simulador**:
+
+    - Escolha opção `10` para acessar configurações
+    - Modifique parâmetros como tema, delay e debug
+    - Redefina todas as configurações para os valores padrão
+    - Exclua todas as ocorrências
+
 <h2 id="estruturas-de-dados-utilizadas">🎲 Estruturas de Dados Utilizadas</h2>
 
 ### 1. **Heap (Fila de Prioridade)**
@@ -221,7 +229,7 @@ Você pode modificar as configurações em `config/constants.py`:
 
 Recursos possíveis para futuras versões do simulador:
 
-- Persistência de dados em arquivo/banco
-- API REST usando Flask/FastAPI
-- Mapas interativos das regiões
-- Métricas de performance das equipes
+- [x] Persistência de dados em arquivo/banco (Falta histórico de ações)
+- [ ] API REST usando Flask/FastAPI
+- [ ] Mapas interativos das regiões
+- [ ] Métricas de performance das equipes

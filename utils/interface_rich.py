@@ -4,13 +4,23 @@ from rich.table import Table
 from rich.panel import Panel
 from rich import box
 from rich.prompt import Prompt
+from rich.prompt import Confirm
 
 from models.ocorrencia import obter_info_ocorrencia
-from utils.helpers import obter_nome_severidade
+from utils.helpers import deletar_ocorrencias_json, obter_nome_severidade
+from config.config_manager import ConfigManager, TerminalTheme
+from utils.terminal import get_console
 
-console = Console()
+# ---------------------------------- Config ---------------------------------- #
+config_manager = ConfigManager()
+console = get_console()
 
 # ---------------------------------- Menu ----------------------------------- #
+
+
+def atualizar_console():
+    global console
+    console = get_console(force_reload=True)
 
 
 def exibir_menu():
@@ -29,6 +39,7 @@ def exibir_menu():
     tabela.add_row("7.", "[magenta]📊 Relatório por região[/magenta]")
     tabela.add_row("8.", "[blue]🎲 Simular chamadas aleatórias[/blue]")
     tabela.add_row("9.", "[blue]📈 Status do sistema[/blue]")
+    tabela.add_row("10.", "[red]🔧 Configurações do simulador[/red]")
     tabela.add_row("0.", "[red]🚪 Sair[/red]")
 
     painel = Panel(
@@ -46,10 +57,8 @@ def exibir_menu():
 
 def imprimir_titulo(texto: str, emoji: str = "🔥", cor: str = "red"):
     """Exibe um título em destaque dentro de um painel"""
-    titulo = f"[bold {cor}]{emoji} {texto.upper()} {emoji}[/bold {cor}]"
-    console.print(
-        Panel(titulo, style="bold red", border_style="bright_blue", expand=False)
-    )
+    titulo = f"[{cor}]{emoji} {texto.upper()} {emoji}[{cor}]"
+    console.print(Panel(titulo, style="red", border_style="bright_blue", expand=False))
 
 
 def imprimir_mensagem(texto: str, estilo: str = "white"):
@@ -77,12 +86,28 @@ def imprimir_info(texto: str):
     console.print(f"[cyan]{texto}[/cyan]")
 
 
-def imprimir_pergunta(texto: str, default: str = None) -> str:
-    """Exibe uma pergunta e retorna a resposta do usuário"""
-    resposta = Prompt.ask(f"[magenta]{texto}[/magenta]", default=default)
-    if resposta:
-        return resposta.strip()
-    return resposta
+def imprimir_pergunta(
+    texto: str,
+    default: str = None,
+    cor: str = "magenta",
+    accepted_answers: list = None,
+    accept_empty: bool = True,
+) -> str:
+
+    if accepted_answers:
+        accepted_answers = [str(ans).lower() for ans in accepted_answers]
+        if accept_empty:
+            accepted_answers.append(None)
+    while True:
+        resposta = Prompt.ask(
+            f"[{cor}]{texto}[/{cor}]", default=default, console=console
+        )
+        if accepted_answers and resposta not in accepted_answers:
+            imprimir_erro(f"Resposta inválida. Aceitas: {', '.join(accepted_answers)}")
+            continue
+        if resposta:
+            return resposta.strip()
+        return resposta
 
 
 def imprimir_divisor(simbolo: str = "─", cor: str = "grey50"):
@@ -123,8 +148,8 @@ def painel_atender_proxima_ocorrencia(ocorrencia, equipe):
 
     painel = Panel(
         tabela,
-        title=f"[bold red]🚒 Atendendo ocorrência {ocorrencia['id']}[/bold red]",
-        border_style="red",
+        title=f"[bold green]Ocorrência {ocorrencia['id']}[/bold green]",
+        border_style="green",
         padding=(1, 1, 1, 1),
         expand=False,
     )
@@ -135,7 +160,7 @@ def painel_atender_proxima_ocorrencia(ocorrencia, equipe):
 def painel_finalizar_atendimento(ocorrencia):
     """Exibe um painel de sucesso ao finalizar o atendimento de uma ocorrência"""
     painel = Panel.fit(
-        f"[bold green]✅ Atendimento finalizado para ocorrência {ocorrencia['id']}[/bold green]\n\n"
+        f"[bold green]✅ Ocorrência {ocorrencia['id']}[/bold green]\n\n"
         f"Equipe [bold]{ocorrencia['equipe_atribuida']}[/bold] agora está disponível",
         border_style="green",
     )
@@ -279,3 +304,134 @@ def painel_status_sistema(
         padding=(1, 2, 1, 2),
     )
     console.print(painel)
+
+
+def painel_configuracoes_simulador(
+    simulador,
+    tempo_maximo_resposta,
+    tempo_minimo_resposta,
+    equipes_disponiveis,
+):
+    """Exibe um painel com as configurações atuais do simulador"""
+    painel = Panel(
+        f"⏱️ Tempo máximo de resposta: {tempo_maximo_resposta} min\n\n"
+        f"⏱️ Tempo mínimo de resposta: {tempo_minimo_resposta} min\n\n"
+        f"👥 Equipes disponíveis: {equipes_disponiveis}\n\n"
+        f"📝 Histórico de ações: {simulador['historico']['tamanho']} ações registradas",
+        border_style="bright_blue",
+        expand=False,
+        padding=(1, 2, 1, 2),
+    )
+    console.print(painel)
+
+
+def painel_configuracoes_interativas(simulador):
+    """Exibe as configurações como uma tabela interativa e permite edição"""
+    config = config_manager.config
+    imprimir_titulo("Configurações do Simulador", emoji="⚙️", cor="bright_blue")
+
+    tema_atual = config.theme
+
+    tabela = Table(title="🔧 Configurações Atuais", box=box.SIMPLE_HEAVY)
+    tabela.add_column("Opção", style="cyan", justify="right")
+    tabela.add_column("Parâmetro", style="magenta")
+    tabela.add_column("Valor Atual", style="green")
+
+    tabela.add_row(
+        "1",
+        "Tema do terminal",
+        "Sem cor (no_color)" if tema_atual == "no_color" else "Padrão (colorido)",
+    )
+    tabela.add_row(
+        "2", "Tempo de delay entre ações", str(config.delay_time) + " segundos"
+    )
+    tabela.add_row(
+        "3", "Modo de depuração", "Ativado" if config.debug else "Desativado"
+    )
+    tabela.add_row(
+        "4",
+        "[yellow]Redefinir configurações para padrão[/yellow]",
+        "",
+    )
+    tabela.add_row(
+        "5",
+        "[red]Deletar todas as ocorrências[/red]",
+        "Todas as ocorrências serão removidas",
+    )
+    tabela.add_row(
+        "0",
+        "[red]Voltar ao menu principal[/red]",
+        "",
+    )
+
+    print()
+    console.print(tabela)
+
+    while True:
+        escolha = Prompt.ask(
+            "[magenta]Digite o número da configuração que deseja alterar[/magenta]",
+            default="0",
+        ).strip()
+        if escolha == "0":
+            imprimir_info("Retornando ao menu...")
+            return
+        elif escolha == "1":
+            novo_tema = (
+                TerminalTheme.NO_COLOR
+                if config.theme == TerminalTheme.DEFAULT
+                else TerminalTheme.DEFAULT
+            )
+            config_manager.update_config(theme=novo_tema)
+            atualizar_console()
+            imprimir_info(f"Tema atualizado para: {novo_tema.value}")
+            break
+
+        elif escolha == "2":
+            novo_delay = Prompt.ask(
+                "[magenta]Digite o novo tempo de delay entre ações (em segundos)[/magenta]",
+                default=str(config.delay_time),
+                show_default=True,
+            )
+            try:
+                if float(novo_delay) < 0:
+                    raise ValueError
+                config_manager.update_config(delay_time=float(novo_delay))
+                imprimir_info(
+                    f"Tempo de delay atualizado para: {config.delay_time} segundos"
+                )
+            except ValueError:
+                imprimir_erro("Valor inválido. Deve ser um número positivo.")
+            break
+        elif escolha == "3":
+            novo_debug = Confirm.ask(
+                "[magenta]Deseja ativar o modo de depuração?[/magenta]",
+                default=config.debug,
+            )
+            config_manager.update_config(debug=novo_debug)
+            imprimir_info(
+                f"Modo de depuração {'ativado' if novo_debug else 'desativado'}."
+            )
+            break
+        elif escolha == "4":
+            confirmar = Confirm.ask(
+                "[red]Tem certeza que deseja redefinir as configurações para o padrão?[/red]",
+                default=False,
+            )
+            if confirmar:
+                config_manager.reset_config()
+                imprimir_sucesso("Configurações redefinidas para o padrão.")
+                atualizar_console()
+                break
+        elif escolha == "5":
+            confirmar = Confirm.ask(
+                "[red]Tem certeza que deseja deletar todas as ocorrências? Esta ação não pode ser desfeita![/red]",
+                default=False,
+            )
+            if confirmar:
+                deletar_ocorrencias_json()
+                from services.simulador_service import simulador_clear
+                simulador_clear(simulador)
+                imprimir_sucesso("Todas as ocorrências foram deletadas.")
+                break
+        else:
+            imprimir_erro("Opção inválida.")

@@ -28,11 +28,6 @@ def pilha_vazia(pilha):
     return len(pilha) == 0
 
 
-def tamanho_pilha(pilha):
-    """Retorna o tamanho da pilha"""
-    return len(pilha)
-
-
 def listar_pilha(pilha):
     """Retorna uma lista com os itens da pilha (do topo para a base)"""
     return pilha[::-1]  # Inverte a lista para mostrar do topo para baixo

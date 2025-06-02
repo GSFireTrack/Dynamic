@@ -14,7 +14,10 @@ from services.simulador_service import (
     simular_chamadas_aleatorias,
     mostrar_status_sistema,
 )
+from config.config_manager import ConfigManager
 from utils.helpers import (
+    carregar_ocorrencias_json,
+    salvar_ocorrencias_json,
     validar_entrada_numerica,
     limpar_tela,
 )
@@ -26,11 +29,8 @@ from utils.interface_rich import (
     imprimir_sucesso,
     imprimir_alerta,
     imprimir_info,
+    painel_configuracoes_interativas,
 )
-
-from rich.console import Console
-
-console = Console()
 
 
 def processar_opcao_1(simulador):
@@ -44,7 +44,10 @@ def processar_opcao_1(simulador):
     imprimir_info(
         "[bold]Níveis de severidade:[/bold] 1-BAIXA | 2-MEDIA | 3-ALTA | 4-CRITICA"
     )
-    entrada_sev = imprimir_pergunta("Severidade (1-4)")
+
+    severidade_min = min(SEVERIDADES.keys())
+    severidade_max = max(SEVERIDADES.keys())
+    entrada_sev = imprimir_pergunta(f"Severidade {(severidade_min, severidade_max)}", accepted_answers=list(SEVERIDADES.keys()))
 
     if validar_entrada_numerica(entrada_sev, 1, 4):
         severidade = int(entrada_sev)
@@ -85,11 +88,13 @@ def processar_opcao_8(simulador):
 
 def executar_simulador():
     simulador = criar_simulador()
+    carregar_ocorrencias_json(simulador)
+    config = ConfigManager().config
 
     while True:
         try:
             exibir_menu()
-            opcao = console.input("Escolha uma opção: ").strip()
+            opcao = imprimir_pergunta("Escolha uma opção", cor="white")
             limpar_tela()
 
             if opcao == "1":
@@ -116,7 +121,10 @@ def executar_simulador():
             elif opcao == "9":
                 imprimir_titulo("Status do sistema", emoji="📈", cor="blue")
                 mostrar_status_sistema(simulador)
+            elif opcao == "10":
+                painel_configuracoes_interativas(simulador)
             elif opcao == "0":
+                salvar_ocorrencias_json(simulador)
                 limpar_tela()
                 imprimir_sucesso("👋 Encerrando simulador. Até logo!")
                 break
@@ -127,6 +135,7 @@ def executar_simulador():
             limpar_tela()
 
         except KeyboardInterrupt:
+            salvar_ocorrencias_json(simulador)
             limpar_tela()
             imprimir_alerta("👋 Encerrando simulador. Até logo!")
             break
@@ -145,3 +154,5 @@ if __name__ == "__main__":
         executar_simulador()
     except Exception as e:
         imprimir_erro(f"Erro ao iniciar o simulador: {e}")
+        if DEBUG:
+            traceback.print_exc()
