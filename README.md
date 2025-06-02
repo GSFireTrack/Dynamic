@@ -1,3 +1,10 @@
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/GSFireTrack/.github/main/utils/logo/logoDarkHD.png">
+        <img alt="Logo da FireTrack" src="https://raw.githubusercontent.com/GSFireTrack/.github/main/utils/logo/logoHD.png" width="300">
+    </picture>
+</p>
+
 # 🔥 Simulador de Resposta a Queimadas
 
 Um sistema de simulação para gerenciamento de resposta a incêndios e queimadas, implementado usando estruturas de dados fundamentais em Python.
@@ -5,6 +12,7 @@ Um sistema de simulação para gerenciamento de resposta a incêndios e queimada
 <details open>
     <summary><h3><strong>📑 Sumário</strong></h3>
         <ol>
+            <li><a href="#info">Informações</a></li>
             <li><a href="#visao-geral">Visão Geral</a></li>
             <li><a href="#estrutura-do-projeto">Estrutura do Projeto</a></li>
             <li><a href="#principais-recursos">Principais Recursos</a></li>
@@ -17,7 +25,38 @@ Um sistema de simulação para gerenciamento de resposta a incêndios e queimada
     </summary>
 </details>
 
-<!-- ## 📋 Visão Geral -->
+<h2 id="info"> ℹ️ Informações </h2>
+
+<table>
+  <tr>
+    <td><strong>Organização Github</strong></td>
+    <td><a href="https://github.com/GSFireTrack">GSFireTrack</a></td>
+  </tr>
+  <tr>
+    <td><strong>Curso</strong></td>
+    <td>Engenharia de Software</td>
+  </tr>
+  <tr>
+    <td><strong>Disciplina</strong></td>
+    <td>Dynamic Programming</td>
+  </tr>
+   <tr>
+      <td><strong>Professor</strong></td>
+      <td>Prof. Lucas Mendes Marques Gonçalves</td>
+   </tr>
+  <tr>
+    <td><strong>Turma</strong></td>
+    <td>2ESPX</td>
+  </tr>
+</table>
+
+<h2 id="equipe"> 👥 Equipe </h2>
+
+| Integrante                      | RM     |
+| ------------------------------- | ------ |
+| Augusto Barcelos Barros         | 565065 |
+| Jefferson Junior Alvarez Urbina | 558497 |
+
 <h2 id="visao-geral">📋 Visão Geral</h1>
 
 Este projeto demonstra a implementação prática de estruturas de dados clássicas aplicadas a um problema real: o gerenciamento de emergências de combate a incêndios. O sistema utiliza diferentes estruturas para otimizar operações específicas:
@@ -27,7 +66,6 @@ Este projeto demonstra a implementação prática de estruturas de dados clássi
 - [x] **Lista Ligada**: Mantém histórico cronológico de todas as ações do sistema
 - [x] **Árvore Binária de Busca**: Organiza e busca ocorrências por região geográfica
 
-<!-- ## 📁 Estrutura do Projeto -->
 <h2 id="estrutura-do-projeto">📁 Estrutura do Projeto</h2>
 
 ```
@@ -49,7 +87,6 @@ simulador_queimadas/
     └── helpers.py            # Funções auxiliares e utilitários
 ```
 
-<!-- ## 🎯 Principais Recursos -->
 <h2 id="principais-recursos">🎯 Principais Recursos</h2>
 
 1. **Gestão de Ocorrências por Prioridade**
@@ -94,7 +131,7 @@ simulador_queimadas/
 
 ```bash
 # Se usando git
-git clone [repositorio]
+git clone https://github.com/GSFireTrack/Dynamic
 cd simulador_queimadas
 
 # Ou simplesmente extraia os arquivos em uma pasta
