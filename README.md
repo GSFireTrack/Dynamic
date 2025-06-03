@@ -63,6 +63,7 @@ Este projeto demonstra a implementação prática de estruturas de dados clássi
 
 - [x] **Heap (Fila de Prioridade)**: Gerencia ocorrências pendentes por prioridade baseada na severidade
 - [x] **Pilha (Stack)**: Controla ocorrências em andamento usando LIFO (Last In, First Out)
+- [x] **Fila (Queue)**: Gerencia ocorrências aguardando equipes disponíveis
 - [x] **Lista Ligada**: Mantém histórico cronológico de todas as ações do sistema
 - [x] **Árvore Binária de Busca**: Organiza e busca ocorrências por região geográfica
 
@@ -70,21 +71,27 @@ Este projeto demonstra a implementação prática de estruturas de dados clássi
 
 ```
 simulador_queimadas/
-├── main.py                   # Arquivo principal com menu interativo
+├── main.py                  # Arquivo principal com menu interativo
 ├── config/
-│   └── constants.py          # Constantes e configurações do sistema
+│   └── constants.py         # Constantes e configurações do sistema
+├── data/
+│   └── ocorrencias.json     # Armazenamento de ocorrências (JSON)
+├── interfaces/
+│   └── console.py           # Instância de console para Rich
+│   ├── menu.py              # Interface de menu interativo
 ├── models/
-│   └── ocorrencia.py         # Modelo de dados da ocorrência
+│   └── ocorrencia.py        # Modelo de dados da ocorrência
 ├── structures/
-│   ├── heap_prioridade.py    # Implementação do heap para prioridades
-│   ├── pilha.py              # Implementação da pilha
-│   ├── lista_ligada.py       # Implementação da lista ligada
-│   └── arvore_regioes.py     # Implementação da árvore binária
+│   └── arvore_regioes.py    # Implementação da árvore binária
+│   ├── fila.py              # Implementação da fila (FIFO)
+│   ├── heap_prioridade.py   # Implementação do heap para prioridades
+│   ├── lista_ligada.py      # Implementação da lista ligada
+│   ├── pilha.py             # Implementação da pilha (LIFO)
 ├── services/
-│   └── simulador_service.py  # Lógica do simulador
+│   ├── persistence.py       # Serviço de persistência de dados
+│   └── simulador.py         # Lógica do simulador
 └── utils/
-    ├── interface_rich.py     # Interface de usuário com Rich
-    └── helpers.py            # Funções auxiliares e utilitários
+    └── helpers.py           # Funções auxiliares e utilitários
 ```
 
 <h2 id="principais-recursos">🎯 Principais Recursos</h2>
@@ -100,6 +107,7 @@ simulador_queimadas/
    - Gerenciamento de equipes disponíveis e ocupadas
    - Atribuição automática de equipes às ocorrências
    - Controle LIFO para finalização de atendimentos
+   - Ocorrências aguardando equipe ficam em uma fila (FIFO)
 
 3. **Histórico Completo**
 
@@ -160,12 +168,13 @@ pip install rich
 2. 🚒 Atender próxima ocorrência
 3. ✅ Finalizar atendimento
 4. 📋 Listar ocorrências pendentes
-5. 🔧 Listar ocorrências em andamento
-6. 📝 Ver histórico de ações
-7. 📊 Relatório por região
-8. 🎲 Simular chamadas aleatórias
-9. 📈 Status do sistema
-10. ⚙️ Configurações do simulador
+5. ⏳ Listar fila de espera
+6. 🔄 Listar ocorrências em andamento
+7. 📝 Ver histórico de ações
+8. 📊 Relatório por região
+9. 🎲 Simular chamadas aleatórias
+10. 📈 Status do sistema
+11. ⚙️ Configurações do simulador
 0. 🚪 Sair
 ```
 
@@ -181,45 +190,53 @@ pip install rich
 
    - Escolha opção `2` para atender a próxima ocorrência
    - Uma equipe será automaticamente atribuída (se disponível)
+   - A ocorrência será removida da fila de prioridade e adicionada à pilha de atendimentos
+   - Caso não haja equipes disponíveis, a ocorrência ficará na fila de espera (FIFO)
 
 3. **Finalizar atendimento**:
 
    - Escolha opção `3` para finalizar a última ocorrência iniciada
    - A equipe ficará disponível novamente
+   - Caso haja ocorrências na fila de espera, uma nova será atendida automaticamente
 
 4. **Listar ocorrências pendentes**:
 
    - Escolha opção `4` para ver a lista ordenada por prioridade
    - Observe que ocorrências críticas aparecem primeiro
 
-5. **Listar ocorrências em andamento**:
+5. **Listar fila de espera**:
 
-   - Escolha opção `5` para ver as ocorrências que estão sendo atendidas
+   - Escolha opção `5` para ver as ocorrências que aguardam equipe
+   - Mostra a lista de ocorrências em espera, ordenadas por severidade e timestamp
+
+6. **Listar ocorrências em andamento**:
+
+   - Escolha opção `6` para ver as ocorrências que estão sendo atendidas
    - Mostra a equipe ocupada e o tempo restante estimado
 
-6. **Ver histórico de ações**:
+7. **Ver histórico de ações**:
 
-   - Escolha opção `6` para ver o histórico de ações
+   - Escolha opção `7` para ver o histórico de ações
    - Você pode buscar por uma ocorrência específica ou ver as últimas N ações
 
-7. **Relatório por região**:
+8. **Relatório por região**:
 
-   - Escolha opção `7` para relatório por região
+   - Escolha opção `8` para relatório por região
    - Veja ocorrências organizadas por região geográfica
 
-8. **Simular chamadas aleatórias**:
+9. **Simular chamadas aleatórias**:
 
-   - Escolha opção `8` para gerar 5 ocorrências aleatórias
+   - Escolha opção `9` para gerar 5 ocorrências aleatórias
    - O sistema criará ocorrências com dados aleatórios (severidade, região, descrição)
 
-9. **Status do sistema**:
+10. **Status do sistema**:
 
-   - Escolha opção `9` para ver resumo do sistema
-   - Observe equipes ocupadas e estatísticas gerais
+    - Escolha opção `10` para ver resumo do sistema
+    - Observe equipes ocupadas e estatísticas gerais
 
-10. **Configurações do simulador**:
+11. **Configurações do simulador**:
 
-    - Escolha opção `10` para acessar configurações
+    - Escolha opção `11` para acessar configurações
     - Modifique parâmetros como tema, delay e debug
     - Redefina todas as configurações para os valores padrão
     - Exclua todas as ocorrências
@@ -237,6 +254,12 @@ pip install rich
 - **Localização**: `structures/pilha.py`
 - **Uso**: Controla ocorrências em andamento
 - **Complexidade**: O(1) para todas as operações
+
+### 5. **Fila (Queue)**
+
+- **Localização**: `structures/fila.py`
+- **Uso**: Armazena ocorrências que aguardam liberação de equipe
+- **Complexidade**: O(1) para enfileirar e desenfileirar
 
 ### 3. **Lista Ligada**
 

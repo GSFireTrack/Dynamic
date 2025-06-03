@@ -1,6 +1,3 @@
-from datetime import datetime
-
-
 def criar_no_lista(acao, timestamp, ocorrencia_id):
     """Cria um novo nó para a lista ligada"""
     return {

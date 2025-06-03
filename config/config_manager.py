@@ -14,7 +14,7 @@ class TerminalTheme(Enum):
 
 @dataclass
 class Config:
-    theme: TerminalTheme = TerminalTheme.NO_COLOR
+    theme: TerminalTheme = TerminalTheme.DEFAULT
     debug: bool = False
     delay_time: float = 0.1
 

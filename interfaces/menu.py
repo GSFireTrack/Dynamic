@@ -1,5 +1,4 @@
 from datetime import datetime
-from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich import box
@@ -7,9 +6,11 @@ from rich.prompt import Prompt
 from rich.prompt import Confirm
 
 from models.ocorrencia import obter_info_ocorrencia
-from utils.helpers import deletar_ocorrencias_json, obter_nome_severidade
+from structures.lista_ligada import inserir_inicio_lista
+from utils.helpers import obter_nome_severidade
+from services.persistence import deletar_ocorrencias_json, simulador_clear
 from config.config_manager import TerminalTheme
-from utils.terminal import get_console
+from interfaces.console import get_console
 
 # ---------------------------------- Config ---------------------------------- #
 console = get_console()
@@ -33,12 +34,13 @@ def exibir_menu():
     tabela.add_row("2.", "[green]🚒 Atender próxima ocorrência[/green]")
     tabela.add_row("3.", "[green]✅ Finalizar atendimento[/green]")
     tabela.add_row("4.", "[yellow]📋 Listar ocorrências pendentes[/yellow]")
-    tabela.add_row("5.", "[yellow]🔧 Listar ocorrências em andamento[/yellow]")
-    tabela.add_row("6.", "[magenta]📝 Ver histórico de ações[/magenta]")
-    tabela.add_row("7.", "[magenta]📊 Relatório por região[/magenta]")
-    tabela.add_row("8.", "[blue]🎲 Simular chamadas aleatórias[/blue]")
-    tabela.add_row("9.", "[blue]📈 Status do sistema[/blue]")
-    tabela.add_row("10.", "[red]🔧 Configurações do simulador[/red]")
+    tabela.add_row("5.", "[yellow]⏳ Listar fila de espera[/yellow]")
+    tabela.add_row("6.", "[yellow]🔄 Listar ocorrências em andamento[/yellow]")
+    tabela.add_row("7.", "[magenta]📝 Ver histórico de ações[/magenta]")
+    tabela.add_row("8.", "[magenta]📊 Relatório por região[/magenta]")
+    tabela.add_row("9.", "[blue]🎲 Simular chamadas aleatórias[/blue]")
+    tabela.add_row("10.", "[blue]📈 Status do sistema[/blue]")
+    tabela.add_row("11.", "[red]🔧 Configurações do simulador[/red]")
     tabela.add_row("0.", "[red]🚪 Sair[/red]")
 
     painel = Panel(
@@ -49,6 +51,7 @@ def exibir_menu():
         expand=False,
     )
     console.print(painel)
+    print()
 
 
 # ---------------------------------- Prints ---------------------------------- #
@@ -98,9 +101,14 @@ def imprimir_pergunta(
         if accept_empty:
             accepted_answers.append(None)
     while True:
-        resposta = Prompt.ask(
-            f"[{cor}]{texto}[/{cor}]", default=default, console=console
-        )
+        if cor == "":
+            resposta = Prompt.ask(
+                texto, default=default, console=console, show_default=False
+            )
+        else:
+            resposta = Prompt.ask(
+                f"[{cor}]{texto}[/{cor}]", default=default, console=console
+            )
         if accepted_answers and resposta not in accepted_answers:
             if None in accepted_answers:
                 accepted_answers.remove(None)
@@ -162,11 +170,39 @@ def painel_atender_proxima_ocorrencia(ocorrencia, equipe):
 def painel_finalizar_atendimento(ocorrencia):
     """Exibe um painel de sucesso ao finalizar o atendimento de uma ocorrência"""
     painel = Panel.fit(
-        f"[bold green]✅ Ocorrência {ocorrencia['id']}[/bold green]\n\n"
+        f"[bold green]✅ Ocorrência {ocorrencia['id']} finalizada[/bold green]\n\n"
         f"Equipe [bold]{ocorrencia['equipe_atribuida']}[/bold] agora está disponível",
         border_style="green",
     )
     console.print(painel)
+
+
+def tabela_fila_espera(fila_espera):
+    tabela = Table(box=box.SIMPLE_HEAVY)
+    tabela.add_column("Nº", style="cyan", justify="right")
+    tabela.add_column("ID", style="magenta")
+    tabela.add_column("Região", style="green")
+    tabela.add_column("Severidade", style="red")
+    tabela.add_column("Descrição", style="yellow")
+    tabela.add_column("Tempo Estimado", justify="center")
+    tabela.add_column("Criada em", style="dim")
+
+    for i, ocorrencia in enumerate(fila_espera, 1):
+        info = obter_info_ocorrencia(ocorrencia)
+        tabela.add_row(
+            str(i),
+            info["id"],
+            info["regiao"],
+            obter_nome_severidade(info["severidade"]),
+            info["descricao"] or "-",
+            f"{info['tempo_estimado']} min",
+            (
+                info["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+                if isinstance(info["timestamp"], datetime)
+                else str(info["timestamp"])
+            ),
+        )
+    console.print(tabela)
 
 
 def tabela_ocorrencias_pendentes(ocorrencias):
@@ -433,8 +469,13 @@ def painel_configuracoes_interativas(simulador, config_manager):
             )
             if confirmar:
                 deletar_ocorrencias_json()
-                from services.simulador_service import simulador_clear
 
+                inserir_inicio_lista(
+                    simulador["historico"],
+                    "Deletar todas as ocorrências",
+                    datetime.now(),
+                    None,
+                )
                 simulador_clear(simulador)
                 imprimir_sucesso("Todas as ocorrências foram deletadas.")
                 break

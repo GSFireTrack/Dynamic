@@ -1,19 +1,25 @@
+from pathlib import Path
+
+
+OCORRENCIAS_FILE_PATH = Path("data/ocorrencias.json")
+
 DEBUG = True
 
-DELAY_TIME = 0.1  # Tempo de delay entre ações
+DELAY_TIME = 0.1
 
 SEVERIDADES = {1: "BAIXA", 2: "MEDIA", 3: "ALTA", 4: "CRITICA"}
 
 TEMPOS_SEVERIDADE = {
-    1: (30, 60),  # BAIXA
-    2: (60, 120),  # MEDIA
-    3: (120, 240),  # ALTA
-    4: (240, 480),  # CRITICA
+    1: (30, 60),
+    2: (60, 120),
+    3: (120, 240),
+    4: (240, 480),
 }
 
 STATUS_OCORRENCIA = {
     "PENDENTE": "Pendente",
     "EM_ANDAMENTO": "Em Andamento",
+    "EM_ESPERA": "Em Espera",
     "CONCLUIDA": "Concluída",
     "CANCELADA": "Cancelada",
 }

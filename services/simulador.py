@@ -21,6 +21,7 @@ from structures.heap_prioridade import (
     listar_heap_ordenado,
     heap_vazio,
 )
+from structures.fila import criar_fila, desenfileirar, fila_vazia, listar_fila
 from structures.pilha import (
     criar_pilha,
     empilhar,
@@ -42,7 +43,7 @@ from utils.helpers import (
     calcular_tempo_estimado,
     obter_nome_severidade,
 )
-from utils.interface_rich import (
+from interfaces.menu import (
     imprimir_erro,
     imprimir_alerta,
     imprimir_mensagem,
@@ -53,6 +54,7 @@ from utils.interface_rich import (
     painel_relatorio_regiao,
     painel_simulacao_chamadas,
     painel_status_sistema,
+    tabela_fila_espera,
     tabela_historico_acoes,
     tabela_ocorrencias_andamento,
     tabela_ocorrencias_pendentes,
@@ -63,6 +65,7 @@ from datetime import datetime
 def criar_simulador():
     """Cria uma nova instância do simulador"""
     return {
+        "fila_espera": criar_fila(),
         "fila_prioridade": criar_heap_prioridade(),
         "pilha_em_andamento": criar_pilha(),
         "historico": criar_lista_ligada(),
@@ -99,8 +102,11 @@ def inserir_nova_ocorrencia(simulador, regiao, severidade, descricao):
     return ocorrencia_id
 
 
+from structures.fila import enfileirar
+
+
 def atender_proxima_ocorrencia(simulador):
-    """Atende a próxima ocorrência na fila de prioridade"""
+    """Atende a próxima ocorrência na fila de prioridade ou move para a fila de espera se todas as equipes estiverem ocupadas."""
     if heap_vazio(simulador["fila_prioridade"]):
         imprimir_erro("Não há ocorrências pendentes para atender.")
         return None
@@ -110,14 +116,19 @@ def atender_proxima_ocorrencia(simulador):
     ]
 
     if not equipes_livres:
+        ocorrencia = remover_heap(simulador["fila_prioridade"])
+        atualizar_status_ocorrencia(ocorrencia, STATUS_OCORRENCIA["EM_ESPERA"])
+        enfileirar(simulador["fila_espera"], ocorrencia)
+
         imprimir_alerta(
-            "Todas as equipes estão ocupadas. Aguarde uma equipe ficar disponível."
+            f"Todas as equipes estão ocupadas. Ocorrência '{ocorrencia['id']}' foi movida para a fila de espera."
         )
+        tabela_fila_espera(simulador["fila_espera"])
         return None
 
     ocorrencia = remover_heap(simulador["fila_prioridade"])
-
     equipe = random.choice(equipes_livres)
+
     atribuir_equipe_ocorrencia(ocorrencia, equipe)
     atualizar_status_ocorrencia(ocorrencia, STATUS_OCORRENCIA["EM_ANDAMENTO"])
     simulador["equipes_ocupadas"].add(equipe)
@@ -130,6 +141,36 @@ def atender_proxima_ocorrencia(simulador):
     painel_atender_proxima_ocorrencia(ocorrencia, equipe)
 
     return ocorrencia["id"]
+
+
+def atender_fila_espera(simulador):
+    """Verifica a fila de espera e tenta atender ocorrências"""
+    while not fila_vazia(simulador["fila_espera"]):
+        equipes_livres = [
+            eq for eq in EQUIPES_DISPONIVEIS if eq not in simulador["equipes_ocupadas"]
+        ]
+
+        if not equipes_livres:
+            break
+
+        ocorrencia = desenfileirar(simulador["fila_espera"])
+        equipe = random.choice(equipes_livres)
+
+        atribuir_equipe_ocorrencia(ocorrencia, equipe)
+        atualizar_status_ocorrencia(ocorrencia, STATUS_OCORRENCIA["EM_ANDAMENTO"])
+        simulador["equipes_ocupadas"].add(equipe)
+
+        empilhar(simulador["pilha_em_andamento"], ocorrencia)
+
+        acao = f"Atendimento retomado (espera) por {equipe}"
+        inserir_inicio_lista(
+            simulador["historico"], acao, datetime.now(), ocorrencia["id"]
+        )
+
+        imprimir_mensagem(
+            f"\nAtendimento iniciado para ocorrência {ocorrencia['id']} por {equipe}.\n"
+        )
+        painel_atender_proxima_ocorrencia(ocorrencia, equipe)
 
 
 def finalizar_atendimento(simulador):
@@ -148,6 +189,8 @@ def finalizar_atendimento(simulador):
     inserir_inicio_lista(simulador["historico"], acao, datetime.now(), ocorrencia["id"])
 
     painel_finalizar_atendimento(ocorrencia)
+
+    atender_fila_espera(simulador)
 
     return ocorrencia["id"]
 
@@ -172,6 +215,17 @@ def listar_ocorrencias_em_andamento(simulador):
     ocorrencias = listar_pilha(simulador["pilha_em_andamento"])
 
     tabela_ocorrencias_andamento(ocorrencias)
+
+
+def listar_ocorrencias_fila_espera(simulador):
+    """Lista todas as ocorrências na fila de espera"""
+    if fila_vazia(simulador["fila_espera"]):
+        imprimir_alerta("Não há ocorrências na fila de espera.")
+        return
+
+    ocorrencias = listar_fila(simulador["fila_espera"])
+
+    tabela_fila_espera(ocorrencias)
 
 
 def listar_historico_acoes(simulador, limite=10):
@@ -262,12 +316,3 @@ def mostrar_status_sistema(simulador):
         num_equipes_disponiveis,
         len(EQUIPES_DISPONIVEIS),
     )
-
-
-def simulador_clear(simulador):
-    """Limpa o simulador, removendo todas as ocorrências e estruturas internas."""
-    simulador["fila_prioridade"] = criar_heap_prioridade()
-    simulador["pilha_em_andamento"] = criar_pilha()
-    simulador["historico"] = criar_lista_ligada()
-    simulador["arvore_regioes"] = criar_arvore_regioes()
-    simulador["ocorrencias"] = {}

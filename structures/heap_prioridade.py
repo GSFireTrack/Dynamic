@@ -1,6 +1,4 @@
 import heapq
-from models.ocorrencia import comparar_prioridade_ocorrencias
-
 
 def criar_heap_prioridade():
     """Cria um novo heap de prioridade vazio"""
@@ -60,4 +58,4 @@ def calcular_chave_prioridade(ocorrencia):
     """Calcula a chave de prioridade para uma ocorrência"""
     severidade = ocorrencia["severidade"]
     timestamp = ocorrencia["timestamp"].timestamp()
-    return (-severidade, timestamp)  # Negando a severidade para criar um heap máximo
+    return (-severidade, timestamp)

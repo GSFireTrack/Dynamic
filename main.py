@@ -2,11 +2,12 @@ import random
 import traceback
 
 from config.constants import DEBUG, REGIOES_PADRAO, SEVERIDADES
-from services.simulador_service import (
+from services.simulador import (
     criar_simulador,
     inserir_nova_ocorrencia,
     atender_proxima_ocorrencia,
     finalizar_atendimento,
+    listar_ocorrencias_fila_espera,
     listar_ocorrencias_pendentes,
     listar_ocorrencias_em_andamento,
     listar_historico_acoes,
@@ -16,12 +17,14 @@ from services.simulador_service import (
 )
 from config.config_manager import ConfigManager
 from utils.helpers import (
-    carregar_ocorrencias_json,
-    salvar_ocorrencias_json,
     validar_entrada_numerica,
     limpar_tela,
 )
-from utils.interface_rich import (
+from services.persistence import (
+    salvar_ocorrencias_json,
+    carregar_ocorrencias_json,
+)
+from interfaces.menu import (
     exibir_menu,
     imprimir_pergunta,
     imprimir_titulo,
@@ -97,7 +100,7 @@ def executar_simulador():
     while True:
         try:
             exibir_menu()
-            opcao = imprimir_pergunta("Escolha uma opção", cor="white")
+            opcao = imprimir_pergunta("Escolha uma opção", cor="")
             limpar_tela()
 
             if opcao == "1":
@@ -112,19 +115,22 @@ def executar_simulador():
                 imprimir_titulo("Ocorrências pendentes", emoji="📋", cor="yellow")
                 listar_ocorrencias_pendentes(simulador)
             elif opcao == "5":
-                imprimir_titulo("Ocorrências em andamento", emoji="🔧", cor="yellow")
-                listar_ocorrencias_em_andamento(simulador)
+                imprimir_titulo("Fila de espera", emoji="⏳", cor="yellow")
+                listar_ocorrencias_fila_espera(simulador)
             elif opcao == "6":
-                processar_opcao_6(simulador)
+                imprimir_titulo("Ocorrências em andamento", emoji="🔄", cor="yellow")
+                listar_ocorrencias_em_andamento(simulador)
             elif opcao == "7":
+                processar_opcao_6(simulador)
+            elif opcao == "8":
                 imprimir_titulo("Relatório por região", emoji="📊", cor="magenta")
                 gerar_relatorio_por_regiao(simulador)
-            elif opcao == "8":
-                processar_opcao_8(simulador, config)
             elif opcao == "9":
+                processar_opcao_8(simulador, config)
+            elif opcao == "10":
                 imprimir_titulo("Status do sistema", emoji="📈", cor="blue")
                 mostrar_status_sistema(simulador)
-            elif opcao == "10":
+            elif opcao == "11":
                 painel_configuracoes_interativas(simulador, config)
             elif opcao == "0":
                 salvar_ocorrencias_json(simulador)
