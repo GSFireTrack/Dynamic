@@ -164,38 +164,30 @@ pip install rich
 3. **Navegue pelo menu interativo**
 
 ```
-╭─ 🔥 SIMULADOR DE RESPOSTA A QUEIMADAS 🔥 ─╮
-│       ‍‍‍‍                                   ‍‍ │
-│   1. 📝 Inserir nova ocorrência           │
-│                                           │
-│   2. 🚒 Atender próxima ocorrência        │
-│                                           │
-│   3. ✅ Finalizar atendimento             │
-│                                           │
-│   4. 📋 Listar ocorrências pendentes      │
-│                                           │
-│   5. ⏳ Listar fila de espera             │
-│                                           │
-│   6. 🔄 Listar ocorrências em andamento   │
-│                                           │
-│   7. 📝 Ver histórico de ações            │
-│                                           │
-│   8. 📊 Relatório por região              │
-│                                           │
-│   9. 🎲 Simular chamadas aleatórias       │
-│                                           │
-│  10. 📈 Status do sistema                 │
-│                                           │
-│  11. 🔧 Configurações do simulador        │
-│                                           │
-│   0. 🚪 Sair                              │
-╰───────────────────────────────────────────╯
-
-Escolha uma opção: 
-
+🔥 SIMULADOR DE RESPOSTA A QUEIMADAS 🔥
+========================================
+1.  📝 Inserir nova ocorrência
+2.  🚒 Atender próxima ocorrência
+3.  ✅ Finalizar atendimento
+4.  📋 Listar ocorrências pendentes
+5.  ⏳ Listar fila de espera
+6.  🔄 Listar ocorrências em andamento
+7.  📝 Ver histórico de ações
+8.  📊 Relatório por região
+9.  🎲 Simular chamadas aleatórias
+10. 📈 Status do sistema
+11. ⚙️ Configurações do simulador
+0.  🚪 Sair
 ```
 
 <h2 id="exemplos-de-uso">🧪 Exemplos de Uso</h2>
+
+0. **Sair**
+
+   - Escolha opção `0` para sair do simulador
+   - O programa será encerrado
+   - Os dados serão salvos automaticamente no arquivo [`data/ocorrencias.json`](data/ocorrencias.json)
+   - As configurações serão salvas no arquivo [`config/config.json`](config/config.json)
 
 1. **Inserir nova ocorrência**:
 
@@ -263,37 +255,37 @@ Escolha uma opção:
 
 ### 1. **Heap (Fila de Prioridade)**
 
-- **Localização**: `structures/heap_prioridade.py`
+- **Localização**: [`structures/heap_prioridade.py`](structures/heap_prioridade.py)
 - **Uso**: Gerencia ocorrências pendentes ordenadas por severidade e timestamp
 - **Complexidade**: O(log n) para inserção e remoção
 
 ### 2. **Pilha (Stack)**
 
-- **Localização**: `structures/pilha.py`
+- **Localização**: [`structures/pilha.py`](structures/pilha.py)
 - **Uso**: Armazena histórico de configurações para permitir desfazer últimas ações
 - **Complexidade**: O(1) para empilhar e desempilhar configurações
 
 ### 3. **Fila (Queue)**
 
-- **Localização**: `structures/fila.py`
+- **Localização**: [`structures/fila.py`](structures/fila.py)
 - **Uso**: Armazena ocorrências que aguardam liberação de equipe com processamento automático
 - **Complexidade**: O(1) para enfileirar e desenfileirar
 
 ### 4. **Lista Ligada**
 
-- **Localização**: `structures/lista_ligada.py`
+- **Localização**: [`structures/lista_ligada.py`](structures/lista_ligada.py)
 - **Uso**: Mantém histórico cronológico de ações
 - **Complexidade**: O(1) para inserção no início, O(n) para busca
 
 ### 5. **Árvore Binária de Busca**
 
-- **Localização**: `structures/arvore_regioes.py`
+- **Localização**: [`structures/arvore_regioes.py`](structures/arvore_regioes.py)
 - **Uso**: Organiza ocorrências por região geográfica
 - **Complexidade**: O(log n) para busca, inserção (caso médio)
 
 <h2 id="configuracoes">⚙️ Configurações</h2>
 
-Você pode modificar as configurações em `config/constants.py`:
+Você pode modificar as configurações em [`config/config.json`](config/config.json) ou modificar as constantes em [`config/constants.py`](config/constants.py)
 
 - **DEBUG**: Ativa/Desativa logs de depuração
 - **DELAY_TIME**: Tempo de espera entre ações (em segundos)
