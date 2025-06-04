@@ -62,8 +62,8 @@ Um sistema de simulação para gerenciamento de resposta a incêndios e queimada
 Este projeto demonstra a implementação prática de estruturas de dados clássicas aplicadas a um problema real: o gerenciamento de emergências de combate a incêndios. O sistema utiliza diferentes estruturas para otimizar operações específicas:
 
 - [x] **Heap (Fila de Prioridade)**: Gerencia ocorrências pendentes por prioridade baseada na severidade
-- [x] **Pilha (Stack)**: Controla ocorrências em andamento usando LIFO (Last In, First Out)
-- [x] **Fila (Queue)**: Gerencia ocorrências aguardando equipes disponíveis
+- [x] **Pilha (Stack)**: Controla histórico de configurações para desfazer última ação no config manager
+- [x] **Fila (Queue)**: Gerencia ocorrências aguardando equipes disponíveis com processamento automático
 - [x] **Lista Ligada**: Mantém histórico cronológico de todas as ações do sistema
 - [x] **Árvore Binária de Busca**: Organiza e busca ocorrências por região geográfica
 
@@ -73,12 +73,13 @@ Este projeto demonstra a implementação prática de estruturas de dados clássi
 simulador_queimadas/
 ├── main.py                  # Arquivo principal com menu interativo
 ├── config/
+│   ├── config_manager.py    # Gerenciador de configurações com histórico (pilha)
 │   └── constants.py         # Constantes e configurações do sistema
 ├── data/
 │   └── ocorrencias.json     # Armazenamento de ocorrências (JSON)
 ├── interfaces/
 │   └── console.py           # Instância de console para Rich
-│   ├── menu.py              # Interface de menu interativo
+│   ├── menu.py              # Interface de menu e seleção modular de ocorrências
 ├── models/
 │   └── ocorrencia.py        # Modelo de dados da ocorrência
 ├── structures/
@@ -106,8 +107,9 @@ simulador_queimadas/
 
    - Gerenciamento de equipes disponíveis e ocupadas
    - Atribuição automática de equipes às ocorrências
-   - Controle LIFO para finalização de atendimentos
-   - Ocorrências aguardando equipe ficam em uma fila (FIFO)
+   - Sistema de dicionário para mapear equipe-ocorrência em andamento
+   - Processamento automático da fila de espera quando equipes ficam disponíveis
+   - Movimentação automática de ocorrências para fila de espera quando não há equipes disponíveis
 
 3. **Histórico Completo**
 
@@ -162,20 +164,35 @@ pip install rich
 3. **Navegue pelo menu interativo**
 
 ```
-🔥 SIMULADOR DE RESPOSTA A QUEIMADAS
-============================================================
-1. 📝 Inserir nova ocorrência
-2. 🚒 Atender próxima ocorrência
-3. ✅ Finalizar atendimento
-4. 📋 Listar ocorrências pendentes
-5. ⏳ Listar fila de espera
-6. 🔄 Listar ocorrências em andamento
-7. 📝 Ver histórico de ações
-8. 📊 Relatório por região
-9. 🎲 Simular chamadas aleatórias
-10. 📈 Status do sistema
-11. ⚙️ Configurações do simulador
-0. 🚪 Sair
+╭─ 🔥 SIMULADOR DE RESPOSTA A QUEIMADAS 🔥 ─╮
+│       ‍‍‍‍                                   ‍‍ │
+│   1. 📝 Inserir nova ocorrência           │
+│                                           │
+│   2. 🚒 Atender próxima ocorrência        │
+│                                           │
+│   3. ✅ Finalizar atendimento             │
+│                                           │
+│   4. 📋 Listar ocorrências pendentes      │
+│                                           │
+│   5. ⏳ Listar fila de espera             │
+│                                           │
+│   6. 🔄 Listar ocorrências em andamento   │
+│                                           │
+│   7. 📝 Ver histórico de ações            │
+│                                           │
+│   8. 📊 Relatório por região              │
+│                                           │
+│   9. 🎲 Simular chamadas aleatórias       │
+│                                           │
+│  10. 📈 Status do sistema                 │
+│                                           │
+│  11. 🔧 Configurações do simulador        │
+│                                           │
+│   0. 🚪 Sair                              │
+╰───────────────────────────────────────────╯
+
+Escolha uma opção: 
+
 ```
 
 <h2 id="exemplos-de-uso">🧪 Exemplos de Uso</h2>
@@ -190,14 +207,14 @@ pip install rich
 
    - Escolha opção `2` para atender a próxima ocorrência
    - Uma equipe será automaticamente atribuída (se disponível)
-   - A ocorrência será removida da fila de prioridade e adicionada à pilha de atendimentos
-   - Caso não haja equipes disponíveis, a ocorrência ficará na fila de espera (FIFO)
+   - A ocorrência será removida da fila de prioridade e mapeada no dicionário de atendimentos
+   - Caso não haja equipes disponíveis, a ocorrência será movida automaticamente para a fila de espera
 
 3. **Finalizar atendimento**:
 
-   - Escolha opção `3` para finalizar a última ocorrência iniciada
+   - Escolha opção `3` para finalizar uma ocorrência em andamento (seleção interativa)
    - A equipe ficará disponível novamente
-   - Caso haja ocorrências na fila de espera, uma nova será atendida automaticamente
+   - O sistema processará automaticamente a fila de espera, atribuindo a próxima ocorrência disponível
 
 4. **Listar ocorrências pendentes**:
 
@@ -207,7 +224,7 @@ pip install rich
 5. **Listar fila de espera**:
 
    - Escolha opção `5` para ver as ocorrências que aguardam equipe
-   - Mostra a lista de ocorrências em espera, ordenadas por severidade e timestamp
+   - Mostra a lista de ocorrências em espera, ordenadas por ordem de chegada (FIFO)
 
 6. **Listar ocorrências em andamento**:
 
@@ -238,6 +255,7 @@ pip install rich
 
     - Escolha opção `11` para acessar configurações
     - Modifique parâmetros como tema, delay e debug
+    - Desfazer última ação no menu (Pilha)
     - Redefina todas as configurações para os valores padrão
     - Exclua todas as ocorrências
 
@@ -252,22 +270,22 @@ pip install rich
 ### 2. **Pilha (Stack)**
 
 - **Localização**: `structures/pilha.py`
-- **Uso**: Controla ocorrências em andamento
-- **Complexidade**: O(1) para todas as operações
+- **Uso**: Armazena histórico de configurações para permitir desfazer últimas ações
+- **Complexidade**: O(1) para empilhar e desempilhar configurações
 
-### 5. **Fila (Queue)**
+### 3. **Fila (Queue)**
 
 - **Localização**: `structures/fila.py`
-- **Uso**: Armazena ocorrências que aguardam liberação de equipe
+- **Uso**: Armazena ocorrências que aguardam liberação de equipe com processamento automático
 - **Complexidade**: O(1) para enfileirar e desenfileirar
 
-### 3. **Lista Ligada**
+### 4. **Lista Ligada**
 
 - **Localização**: `structures/lista_ligada.py`
 - **Uso**: Mantém histórico cronológico de ações
 - **Complexidade**: O(1) para inserção no início, O(n) para busca
 
-### 4. **Árvore Binária de Busca**
+### 5. **Árvore Binária de Busca**
 
 - **Localização**: `structures/arvore_regioes.py`
 - **Uso**: Organiza ocorrências por região geográfica
@@ -290,6 +308,10 @@ Você pode modificar as configurações em `config/constants.py`:
 Recursos possíveis para futuras versões do simulador:
 
 - [x] Persistência de dados em arquivo/banco (Falta histórico de ações)
+- [x] Arquitetura modular com separação de responsabilidades
+- [x] Sistema automático de fila de espera
 - [ ] API REST usando Flask/FastAPI
 - [ ] Mapas interativos das regiões
 - [ ] Métricas de performance das equipes
+- [ ] Testes unitários automatizados
+- [ ] Interface gráfica (GUI) com Tkinter ou PyQt

@@ -40,12 +40,14 @@ def carregar_ocorrencias_json(simulador, CAMINHO_ARQUIVO=OCORRENCIAS_FILE_PATH):
         inserir_arvore(
             simulador["arvore_regioes"], ocorrencia["regiao"], ocorrencia["id"]
         )
+
         if ocorrencia["status"] == "Pendente":
             inserir_heap(simulador["fila_prioridade"], ocorrencia)
 
         if ocorrencia["status"] == "Em Andamento":
-            empilhar(simulador["pilha_em_andamento"], ocorrencia)
-            simulador["equipes_ocupadas"].add(ocorrencia["equipe_atribuida"])
+            simulador["ocorrencias_em_andamento"][ocorrencia["id"]] = ocorrencia
+            if ocorrencia.get("equipe_atribuida"):
+                simulador["equipes_ocupadas"].add(ocorrencia["equipe_atribuida"])
 
         if ocorrencia["status"] == "Em Espera":
             enfileirar(simulador["fila_espera"], ocorrencia)
@@ -63,8 +65,9 @@ def deletar_ocorrencias_json(CAMINHO_ARQUIVO=OCORRENCIAS_FILE_PATH):
 def simulador_clear(simulador):
     """Limpa o simulador, removendo todas as ocorrências e estruturas internas."""
     simulador["fila_prioridade"] = criar_heap_prioridade()
-    simulador["pilha_em_andamento"] = criar_pilha()
+    simulador["ocorrencias_em_andamento"] = {}
     simulador["historico"] = criar_lista_ligada()
     simulador["arvore_regioes"] = criar_arvore_regioes()
     simulador["fila_espera"] = criar_fila()
+    simulador["equipes_ocupadas"] = set()
     simulador["ocorrencias"] = {}

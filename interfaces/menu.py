@@ -88,18 +88,19 @@ def imprimir_info(texto: str):
     console.print(f"[cyan]{texto}[/cyan]")
 
 
+from typing import Optional
+
+
 def imprimir_pergunta(
     texto: str,
-    default: str = None,
+    default: Optional[str] = None,
     cor: str = "magenta",
-    accepted_answers: list = None,
+    accepted_answers: Optional[list] = None,
     accept_empty: bool = True,
 ) -> str:
 
     if accepted_answers:
         accepted_answers = [str(ans).lower() for ans in accepted_answers]
-        if accept_empty:
-            accepted_answers.append(None)
     while True:
         if cor == "":
             resposta = Prompt.ask(
@@ -109,20 +110,22 @@ def imprimir_pergunta(
             resposta = Prompt.ask(
                 f"[{cor}]{texto}[/{cor}]", default=default, console=console
             )
-        if accepted_answers and resposta not in accepted_answers:
-            if None in accepted_answers:
-                accepted_answers.remove(None)
-            accepted_answers = [str(ans) for ans in accepted_answers]
+        if not resposta and accept_empty:
+            return ""
+        if (
+            accepted_answers
+            and resposta is not None
+            and resposta.lower() not in accepted_answers
+        ):
             imprimir_erro(f"Resposta inválida. Aceitas: {', '.join(accepted_answers)}")
             continue
         if resposta:
             return resposta.strip()
-        return resposta
 
 
 def imprimir_divisor(simbolo: str = "─", cor: str = "grey50"):
     """Linha divisória estética"""
-    console.rule(character=simbolo, style=cor)
+    console.rule(characters=simbolo, style=cor)
 
 
 # ------------------------------ Painel & Tabela ----------------------------- #
@@ -145,7 +148,7 @@ def painel_ocorrencia_criada(
 
 def painel_atender_proxima_ocorrencia(ocorrencia, equipe):
     """Exibe um painel para atender a próxima ocorrência"""
-    tabela = Table(padding=(0, 1), expand="false", show_header=False, box=None)
+    tabela = Table(padding=(0, 1), expand=False, show_header=False, box=None)
     tabela.add_row(
         "[bold]Equipe: [/bold]" + equipe,
         "[bold]Severidade: [/bold]" + obter_nome_severidade(ocorrencia["severidade"]),
@@ -391,11 +394,20 @@ def painel_configuracoes_interativas(simulador, config_manager):
     )
     tabela.add_row(
         "4",
+        "[yellow]Desfazer última alteração[/yellow]",
+        (
+            f"Disponível ({config_manager.get_undo_count()} ações)"
+            if config_manager.has_undo_history()
+            else "Indisponível"
+        ),
+    )
+    tabela.add_row(
+        "5",
         "[yellow]Redefinir configurações para padrão[/yellow]",
         "",
     )
     tabela.add_row(
-        "5",
+        "6",
         "[red]Deletar todas as ocorrências[/red]",
         "Todas as ocorrências serão removidas",
     )
@@ -453,6 +465,15 @@ def painel_configuracoes_interativas(simulador, config_manager):
             )
             break
         elif escolha == "4":
+            if config_manager.undo_last_config_change():
+                atualizar_console()
+                imprimir_sucesso(
+                    "Última alteração de configuração desfeita com sucesso!"
+                )
+            else:
+                imprimir_erro("Não há alterações de configuração para desfazer.")
+            break
+        elif escolha == "5":
             confirmar = Confirm.ask(
                 "[red]Tem certeza que deseja redefinir as configurações para o padrão?[/red]",
                 default=False,
@@ -462,7 +483,7 @@ def painel_configuracoes_interativas(simulador, config_manager):
                 imprimir_sucesso("Configurações redefinidas para o padrão.")
                 atualizar_console()
                 break
-        elif escolha == "5":
+        elif escolha == "6":
             confirmar = Confirm.ask(
                 "[red]Tem certeza que deseja deletar todas as ocorrências? Esta ação não pode ser desfeita![/red]",
                 default=False,
@@ -481,3 +502,138 @@ def painel_configuracoes_interativas(simulador, config_manager):
                 break
         else:
             imprimir_erro("Opção inválida.")
+
+
+def tabela_selecao_ocorrencias_atender(ocorrencias_disponiveis):
+    """Exibe uma tabela para seleção de ocorrências a serem atendidas"""
+    tabela = Table(
+        title="🚒 Selecione uma ocorrência para atender", box=box.SIMPLE_HEAVY
+    )
+    tabela.add_column("Nº", style="cyan", justify="right")
+    tabela.add_column("ID", style="magenta")
+    tabela.add_column("Região", style="green")
+    tabela.add_column("Severidade", style="red")
+    tabela.add_column("Descrição", style="yellow")
+    tabela.add_column("Status Atual", style="blue")
+    tabela.add_column("Tempo Estimado", justify="center")
+    tabela.add_column("Criada em", style="dim")
+
+    for i, item in enumerate(ocorrencias_disponiveis, 1):
+        ocorrencia = item["ocorrencia"]
+        status_atual = item["status_atual"]
+        info = obter_info_ocorrencia(ocorrencia)
+
+        tabela.add_row(
+            str(i),
+            info["id"],
+            info["regiao"],
+            obter_nome_severidade(info["severidade"]),
+            info["descricao"] or "-",
+            status_atual,
+            f"{info['tempo_estimado']} min",
+            (
+                info["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+                if isinstance(info["timestamp"], datetime)
+                else str(info["timestamp"])
+            ),
+        )
+    console.print(tabela)
+
+
+def tabela_selecao_ocorrencias_finalizar(ocorrencias):
+    """Exibe uma tabela para seleção de ocorrências a serem finalizadas"""
+    tabela = Table(
+        title="✅ Selecione uma ocorrência para finalizar", box=box.SIMPLE_HEAVY
+    )
+    tabela.add_column("Nº", style="cyan", justify="right")
+    tabela.add_column("ID", style="magenta")
+    tabela.add_column("Região", style="green")
+    tabela.add_column("Severidade", style="red")
+    tabela.add_column("Equipe", style="blue")
+    tabela.add_column("Tempo Estimado Restante", justify="center")
+    tabela.add_column("Iniciada em", style="dim")
+
+    for i, ocorrencia in enumerate(ocorrencias, 1):
+        info = obter_info_ocorrencia(ocorrencia)
+        tabela.add_row(
+            str(i),
+            info["id"],
+            info["regiao"],
+            obter_nome_severidade(info["severidade"]),
+            info["equipe_atribuida"] or "-",
+            f"{info['tempo_estimado']} min",
+            (
+                info["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+                if isinstance(info["timestamp"], datetime)
+                else str(info["timestamp"])
+            ),
+        )
+    console.print(tabela)
+
+
+def selecionar_ocorrencia_atender(ocorrencias_disponiveis):
+    """Interface para seleção de ocorrência a ser atendida"""
+    if not ocorrencias_disponiveis:
+        imprimir_erro("Não há ocorrências pendentes para atender.")
+        return None
+
+    tabela_selecao_ocorrencias_atender(ocorrencias_disponiveis)
+
+    try:
+        escolha = imprimir_pergunta(
+            f"Digite o número da ocorrência para atender (1-{len(ocorrencias_disponiveis)})",
+            accepted_answers=[
+                str(i) for i in range(1, len(ocorrencias_disponiveis) + 1)
+            ],
+        )
+        indice = int(escolha) - 1
+        item_selecionado = ocorrencias_disponiveis[indice]
+        return item_selecionado
+    except (ValueError, IndexError):
+        imprimir_info("\nRetornando ao menu...")
+        return None
+
+
+def selecionar_ocorrencia_finalizar(ocorrencias_andamento):
+    """Interface para seleção de ocorrência a ser finalizada"""
+    if not ocorrencias_andamento:
+        imprimir_erro("Não há ocorrências em andamento para finalizar.")
+        return None
+
+    tabela_selecao_ocorrencias_finalizar(ocorrencias_andamento)
+
+    try:
+        escolha = imprimir_pergunta(
+            f"Digite o número da ocorrência para finalizar (1-{len(ocorrencias_andamento)})",
+            accepted_answers=[str(i) for i in range(1, len(ocorrencias_andamento) + 1)],
+        )
+        indice = int(escolha) - 1
+        ocorrencia = ocorrencias_andamento[indice]
+        return ocorrencia
+    except (ValueError, IndexError):
+        imprimir_info("\nRetornando ao menu...")
+        return None
+
+
+def painel_ocorrencia_movida_fila_espera(ocorrencia):
+    """Exibe um painel informando que a ocorrência foi movida para fila de espera"""
+    painel = Panel.fit(
+        f"[bold]Motivo:[/bold] Todas as equipes estão ocupadas\n"
+        f"[bold]Região:[/bold] {ocorrencia['regiao']} | [bold]Severidade:[/bold] {obter_nome_severidade(ocorrencia['severidade'])}",
+        title=f"[yellow]⏳ Ocorrência {ocorrencia['id']} adicionada à fila de espera[/yellow]\n\n",
+        border_style="yellow",
+        padding=(1, 1, 0, 1),
+    )
+    console.print(painel)
+
+
+def painel_atendimento_automatico_fila_espera(ocorrencia, equipe):
+    """Exibe um painel informando atendimento automático da fila de espera"""
+    painel = Panel.fit(
+        f"[bold]Ocorrência:[/bold] {ocorrencia['id']} | [bold]Equipe:[/bold] {equipe}\n"
+        f"[bold]Região:[/bold] {ocorrencia['regiao']} | [bold]Severidade:[/bold] {obter_nome_severidade(ocorrencia['severidade'])}",
+        title=f"[green]🚒 Atendimento automático iniciado[/green]\n\n",
+        border_style="green",
+        padding=(1, 1, 0, 1),
+    )
+    console.print(painel)
