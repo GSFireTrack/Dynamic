@@ -140,7 +140,7 @@ def executar_simulador():
             else:
                 imprimir_erro("Opção inválida. Tente novamente.")
 
-            input(f"\nPressione Enter para voltar ao menu...")
+            input("\nPressione Enter para voltar ao menu...")
             limpar_tela()
 
         except KeyboardInterrupt:

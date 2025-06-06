@@ -5,6 +5,7 @@ from rich import box
 from rich.prompt import Prompt
 from rich.prompt import Confirm
 
+from typing import Optional
 from models.ocorrencia import obter_info_ocorrencia
 from structures.lista_ligada import inserir_inicio_lista
 from utils.helpers import obter_nome_severidade
@@ -88,9 +89,6 @@ def imprimir_info(texto: str):
     console.print(f"[cyan]{texto}[/cyan]")
 
 
-from typing import Optional
-
-
 def imprimir_pergunta(
     texto: str,
     default: Optional[str] = None,
@@ -98,7 +96,6 @@ def imprimir_pergunta(
     accepted_answers: Optional[list] = None,
     accept_empty: bool = True,
 ) -> str:
-
     if accepted_answers:
         accepted_answers = [str(ans).lower() for ans in accepted_answers]
     while True:
@@ -550,7 +547,7 @@ def tabela_selecao_ocorrencias_finalizar(ocorrencias):
     tabela.add_column("Região", style="green")
     tabela.add_column("Severidade", style="red")
     tabela.add_column("Equipe", style="blue")
-    tabela.add_column("Tempo Estimado Restante", justify="center")
+    tabela.add_column("Tempo Restante", justify="center")
     tabela.add_column("Iniciada em", style="dim")
 
     for i, ocorrencia in enumerate(ocorrencias, 1):
@@ -632,7 +629,7 @@ def painel_atendimento_automatico_fila_espera(ocorrencia, equipe):
     painel = Panel.fit(
         f"[bold]Ocorrência:[/bold] {ocorrencia['id']} | [bold]Equipe:[/bold] {equipe}\n"
         f"[bold]Região:[/bold] {ocorrencia['regiao']} | [bold]Severidade:[/bold] {obter_nome_severidade(ocorrencia['severidade'])}",
-        title=f"[green]🚒 Atendimento automático iniciado[/green]\n\n",
+        title="[green]🚒 Atendimento automático iniciado[/green]\n\n",
         border_style="green",
         padding=(1, 1, 0, 1),
     )
