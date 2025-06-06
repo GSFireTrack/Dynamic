@@ -306,4 +306,4 @@ Recursos possíveis para futuras versões do simulador:
 - [ ] Mapas interativos das regiões
 - [ ] Métricas de performance das equipes
 - [ ] Testes unitários automatizados
-- [ ] Interface gráfica (GUI) com Tkinter ou PyQt
+- [ ] Interface gráfica (GUI)
